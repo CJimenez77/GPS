@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+
+    environment {
+        DATABASE_URL = credentials('database-url')
+    }
+
+    stages {
+        stage('Install') {
+            steps {
+                dir('microservices/ms-requirements') {
+                    sh 'npm ci'
+                }
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                dir('microservices/ms-requirements') {
+                    sh 'npm run lint'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                dir('microservices/ms-requirements') {
+                    sh 'npm test'
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir('microservices/ms-requirements') {
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir('microservices/ms-requirements') {
+                    sh 'docker build -t gps-ms-requirements:$BUILD_NUMBER .'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh 'docker stop ms-requirements || true'
+                sh 'docker rm ms-requirements || true'
+                sh 'docker run -d --name ms-requirements -p 3001:3001 --env DATABASE_URL gps-ms-requirements:$BUILD_NUMBER'
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

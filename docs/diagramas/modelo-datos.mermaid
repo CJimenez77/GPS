@@ -1,0 +1,117 @@
+erDiagram
+
+    EMPRESA {
+        uuid id PK
+        varchar_200 nombre
+        varchar_20 rut "UNIQUE — validar antes de crear"
+        boolean activo "DEFAULT true — nunca eliminar físicamente"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    AREA {
+        uuid id PK
+        varchar_200 nombre
+        uuid empresa_id FK
+        boolean activo "DEFAULT true"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    DISCIPLINA {
+        uuid id PK
+        varchar_200 nombre
+        uuid area_id FK
+        boolean activo "DEFAULT true"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    TIPO_DOCUMENTO {
+        uuid id PK
+        varchar_100 nombre "carta, oficio, memo, informe..."
+        boolean activo
+    }
+
+    GRUPO_AREA {
+        uuid id PK
+        uuid area_id FK
+        varchar tipo "colaborador | lector | acceso_reservado"
+        varchar usuario_id "ID del usuario en Azure AD"
+    }
+
+    ETAPA_PROCESO {
+        uuid id PK
+        uuid area_id FK
+        int orden "secuencia de la etapa — qué va primero"
+        varchar_200 nombre "Etapa 1, Revisión inicial, etc."
+        varchar revisor_id "usuario Azure AD asignado como revisor"
+        varchar aprobador_id "usuario Azure AD asignado como aprobador"
+        boolean requiere_aprobador "si false, salta a siguiente etapa"
+        boolean activo
+    }
+
+    EXPEDIENTE {
+        uuid id PK
+        varchar_300 titulo
+        text descripcion
+        uuid empresa_id FK
+        uuid area_id FK
+        uuid disciplina_id FK
+        uuid tipo_documento_id FK
+        varchar estado "borrador|en_revision|aprobado|rechazado"
+        boolean reservado "solo grupo acceso_reservado lo ve"
+        uuid etapa_actual_id FK "etapa actual del proceso"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    DOCUMENTO_ADJUNTO {
+        uuid id PK
+        uuid expediente_id FK
+        varchar nombre_archivo
+        varchar url_sharepoint "ubicación en SharePoint Online"
+        varchar tipo_mime
+        int version "versionado automático SharePoint"
+        varchar subido_por "usuario Azure AD"
+        timestamp created_at
+    }
+
+    TAREA {
+        uuid id PK
+        uuid expediente_id FK
+        uuid etapa_id FK
+        varchar asignado_a "usuario Azure AD"
+        varchar tipo "revision|colaboracion|aprobacion"
+        varchar estado "pendiente|en_progreso|completada|cancelada"
+        text comentario "obligatorio al cerrar"
+        timestamp fecha_limite
+        timestamp completada_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    HISTORIAL_EXPEDIENTE {
+        uuid id PK
+        uuid expediente_id FK
+        varchar usuario_id "quien realizó la acción"
+        varchar accion "creado|avanzado|colaboracion_solicitada|aprobado|rechazado..."
+        varchar estado_anterior
+        varchar estado_nuevo
+        text comentario
+        timestamp created_at "INMUTABLE — nunca modificar este registro"
+    }
+
+    EMPRESA          ||--o{ AREA                  : "tiene (1..N)"
+    AREA             ||--o{ DISCIPLINA             : "tiene (1..N)"
+    AREA             ||--o{ GRUPO_AREA             : "agrupa usuarios"
+    AREA             ||--o{ ETAPA_PROCESO          : "define proceso (1..N etapas)"
+    EMPRESA          ||--o{ EXPEDIENTE             : "contiene"
+    AREA             ||--o{ EXPEDIENTE             : "clasifica"
+    DISCIPLINA       ||--o{ EXPEDIENTE             : "clasifica"
+    TIPO_DOCUMENTO   ||--o{ EXPEDIENTE             : "tipifica"
+    ETAPA_PROCESO    }o--o{ EXPEDIENTE             : "etapa actual"
+    EXPEDIENTE       ||--o{ DOCUMENTO_ADJUNTO      : "tiene (1..N archivos)"
+    EXPEDIENTE       ||--o{ TAREA                  : "genera"
+    EXPEDIENTE       ||--o{ HISTORIAL_EXPEDIENTE   : "registra (inmutable)"
+    ETAPA_PROCESO    ||--o{ TAREA                  : "origina"

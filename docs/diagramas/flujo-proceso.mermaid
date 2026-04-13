@@ -1,0 +1,71 @@
+flowchart TD
+    A([Colaborador crea expediente]) --> B
+
+    B["Selecciona:\n- Empresa\n- Área\n- Disciplina\n- Tipo documento\n- ¿Reservado?"]
+    B --> C
+
+    C{Sistema detecta\nconfiguración del área}
+    C -->|Área tiene etapas configuradas| D
+    C -->|Área sin etapas configuradas| ERR([Error: configurar proceso primero])
+
+    D["Sistema asigna etapa 1 automáticamente\nCrea TAREA tipo=revisión\npara revisor de etapa 1\nRegistra en HISTORIAL"]
+    D --> E
+
+    E["Revisor ve tarea en\nsu panel transversal\n(todas sus áreas)"]
+    E --> F
+
+    F{Revisor decide}
+
+    F -->|Solicitar colaboración| G
+    F -->|Avanzar a siguiente etapa| K
+    F -->|Rechazar expediente| RECHAZADO
+
+    G["Selecciona colaborador\n(SOLO del grupo colaboradores\nde esta área específica)"]
+    G --> H
+
+    H["Sistema crea TAREA tipo=colaboración\nFecha límite asignada\nRegistra en HISTORIAL"]
+    H --> I
+
+    I["Colaborador recibe tarea\nRevisa documentos del expediente"]
+    I --> J
+
+    J{Colaborador puede SOLO}
+    J -->|Cerrar tarea con comentario| F
+    J -->|x NO puede aprobar| J
+    J -->|x NO puede revisar| J
+
+    K{¿Hay más etapas\nen el proceso del área?}
+    K -->|Sí — siguiente etapa| L
+    K -->|No — es la última etapa| M
+
+    L["Sistema crea TAREA tipo=revisión\npara revisor de siguiente etapa\nRegistra en HISTORIAL"]
+    L --> E
+
+    M{¿Esta etapa final\nrequiere_aprobador = true?}
+    M -->|Sí| N
+    M -->|No| APROBADO
+
+    N["Sistema crea TAREA tipo=aprobación\npara aprobador configurado\nen esta etapa"]
+    N --> O
+
+    O["Aprobador revisa\nexpediente completo\ncon todo el historial"]
+    O --> P
+
+    P{Aprobador decide}
+    P -->|Aprobar| APROBADO
+    P -->|Rechazar| RECHAZADO
+    P -->|Devolver a revisión| F
+
+    APROBADO(["✅ Expediente APROBADO\nEstado final registrado\nen HISTORIAL"])
+    RECHAZADO(["❌ Expediente RECHAZADO\nMotivo en HISTORIAL\nNotificación al creador"])
+
+    style A fill:#E1F5EE,stroke:#0F6E56,color:#04342C
+    style APROBADO fill:#E1F5EE,stroke:#0F6E56,color:#04342C
+    style RECHAZADO fill:#FCEBEB,stroke:#A32D2D,color:#501313
+    style ERR fill:#FAEEDA,stroke:#854F0B,color:#412402
+    style F fill:#EEEDFE,stroke:#534AB7,color:#26215C
+    style P fill:#EEEDFE,stroke:#534AB7,color:#26215C
+    style C fill:#EEEDFE,stroke:#534AB7,color:#26215C
+    style M fill:#EEEDFE,stroke:#534AB7,color:#26215C
+    style K fill:#EEEDFE,stroke:#534AB7,color:#26215C
+    style J fill:#FAECE7,stroke:#993C1D,color:#4A1B0C

@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: gps
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  ms-requirements:
+    build:
+      context: ./microservices/ms-requirements
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/gps
+      - PORT=3001
+    depends_on:
+      - db
+
+  ngrok:
+    image: wernight/ngrok:latest
+    ports:
+      - "4040:4040"
+    environment:
+      - NGROK_AUTH_TOKEN=${NGROK_AUTH_TOKEN}
+    command: http ms-requirements:3001
+    depends_on:
+      - ms-requirements
+
+volumes:
+  pgdata:

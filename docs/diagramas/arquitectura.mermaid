@@ -1,0 +1,44 @@
+graph TB
+    subgraph DEV["Desarrollo local"]
+        DC["docker-compose up\nms-req + ms-users + ms-reports + PostgreSQL"]
+    end
+
+    subgraph CICD["CI/CD Pipeline"]
+        GH["GitHub\nrepositorio central"]
+        GA["GitHub Actions\nbuild→lint→test→docker→deploy\nSprint 1"]
+        JK["Jenkins\nOracle Cloud Free Tier\nSprint 2"]
+        GH -->|"push webhook"| GA
+        GH -->|"push webhook Sprint 2"| JK
+    end
+
+    subgraph RAILWAY["Railway — Hosting gratuito"]
+        MSR["ms-requirements\nNode 18 + Express\nDocker :3001"]
+        MSU["ms-users\nNode 18 + Express\nDocker :3002"]
+        MSRP["ms-reports\nNode 18 + Express\nDocker :3003"]
+        PG[("PostgreSQL\nDrizzle ORM\nlógica transaccional")]
+        MSR --- PG
+        MSU --- PG
+    end
+
+    subgraph SHAREPOINT["SharePoint Online — Tenant de Cristian"]
+        SPFX["SPFx Web Part\nReact + TypeScript\nFrontend de la aplicación\nBLOQUEADO hasta recibir tenant"]
+        SPLISTS["SharePoint Lists\nBibliotecas\nDocument Sets\nDocumentos y expedientes"]
+    end
+
+    subgraph MICROSOFT["Microsoft 365"]
+        AAD["Azure Active Directory\nAutenticación OAuth 2.0\nJWT tokens"]
+        PBI["Power BI Online\nReportes embebidos\nen interfaz SPFx"]
+    end
+
+    GA -->|"railway up"| RAILWAY
+    JK -->|"railway up Sprint 2"| RAILWAY
+
+    SPFX -->|"HTTP REST + Bearer JWT"| MSR
+    SPFX -->|"HTTP REST + Bearer JWT"| MSU
+    SPFX -->|"HTTP REST + Bearer JWT"| MSRP
+
+    MSR -->|"Graph API\nOAuth2 Client Credentials"| SPLISTS
+    MSU -->|"Graph API"| AAD
+    MSRP -->|"Power BI REST API"| PBI
+
+    AAD -->|"SSO — sin login propio"| SPFX
