@@ -24,15 +24,5 @@ services:
     depends_on:
       - db
 
-  ngrok:
-    image: wernight/ngrok:latest
-    ports:
-      - "4040:4040"
-    environment:
-      - NGROK_AUTH_TOKEN=${NGROK_AUTH_TOKEN}
-    command: http ms-requirements:3001
-    depends_on:
-      - ms-requirements
-
 volumes:
   pgdata:

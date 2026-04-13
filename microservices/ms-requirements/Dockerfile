@@ -2,11 +2,11 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci --only=production
+COPY package*.json tsconfig.json drizzle.config.ts ./
+COPY src ./src
 
-COPY dist ./dist
-COPY drizzle.config.ts ./
+RUN npm install && \
+    npm run build
 
 EXPOSE 3001
 
