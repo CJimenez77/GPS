@@ -18,6 +18,11 @@ export class EmpresasController {
     res.json(empresas);
   }
 
+  async listInactive(req: Request, res: Response) {
+    const empresas = await empresasService.findAllInactive();
+    res.json(empresas);
+  }
+
   async getById(req: Request, res: Response) {
     const { id } = req.params;
     const empresa = await empresasService.findById(id);
@@ -76,6 +81,20 @@ export class EmpresasController {
     try {
       await empresasService.delete(id);
       res.status(204).send();
+    } catch (error) {
+      if (error instanceof Error && error.message === 'EMPRESA_NO_ENCONTRADA') {
+        res.status(404).json({ error: 'Empresa no encontrada' });
+        return;
+      }
+      throw error;
+    }
+  }
+
+  async activate(req: Request, res: Response) {
+    const { id } = req.params;
+    try {
+      const empresa = await empresasService.activate(id);
+      res.json(empresa);
     } catch (error) {
       if (error instanceof Error && error.message === 'EMPRESA_NO_ENCONTRADA') {
         res.status(404).json({ error: 'Empresa no encontrada' });

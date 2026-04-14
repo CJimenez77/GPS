@@ -8,8 +8,18 @@ export class EmpresasService {
     return result;
   }
 
+  async findAllInactive(): Promise<Empresa[]> {
+    const result = await db.select().from(empresas).where(eq(empresas.activo, false));
+    return result;
+  }
+
   async findById(id: string): Promise<Empresa | null> {
     const result = await db.select().from(empresas).where(and(eq(empresas.id, id), eq(empresas.activo, true)));
+    return result[0] || null;
+  }
+
+  async findByIdAny(id: string): Promise<Empresa | null> {
+    const result = await db.select().from(empresas).where(eq(empresas.id, id));
     return result[0] || null;
   }
 
@@ -62,6 +72,20 @@ export class EmpresasService {
     await db.update(empresas)
       .set({ activo: false, updatedAt: new Date() })
       .where(eq(empresas.id, id));
+  }
+
+  async activate(id: string): Promise<Empresa> {
+    const existing = await this.findByIdAny(id);
+    if (!existing) {
+      throw new Error('EMPRESA_NO_ENCONTRADA');
+    }
+
+    const [result] = await db.update(empresas)
+      .set({ activo: true, updatedAt: new Date() })
+      .where(eq(empresas.id, id))
+      .returning();
+
+    return result;
   }
 }
 
