@@ -22,7 +22,7 @@ services:
       - DATABASE_URL=postgresql://postgres:password@db:5432/gps
       - PORT=3001
     volumes:
-      - ./frontend/dist:/app/frontend/dist
+      - ./frontend/dist:/app/frontend/dist:ro
     depends_on:
       - db
 
